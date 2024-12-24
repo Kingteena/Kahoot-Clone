@@ -46,19 +46,14 @@ function QuizContainer() {
   const [score, setScore] = React.useState(0);
   const [isQuizComplete, setIsQuizComplete] = React.useState(false);
   const [isFeedbackTime, setIsFeedbackTime] = React.useState(false);
+  const [questions, setQuestions] = React.useState(null);
 
-  const questions = [
-    {
-      text: "What is the capital of France?",
-      options: ["Paris", "London", "Berlin", "Rome"],
-      correctAnswer: 0,
-    },
-    {
-      text: "What is 2 + 2?",
-      options: ["3", "4", "5", "6"],
-      correctAnswer: 1,
-    },
-  ];
+  React.useEffect(() => {
+    fetch('http://localhost:3000/api/quiz/')
+      .then((res) => res.json())
+      .then((data) => setQuestions(data));
+  }, []);
+
 
   const handleAnswerSelect = (answer) => {
     setIsFeedbackTime(true);
@@ -89,9 +84,15 @@ function QuizContainer() {
     setIsFeedbackTime(false);
   }
 
-  const current_question = questions[currentQuestionIndex];
+
+  if (!questions) {
+    return <div>Loading...</div>;
+  }
+  else{
+    const current_question = questions[currentQuestionIndex];
 
   return (
+    
     <div className="quiz-container">
       <Question question_text={current_question.text} />
       <Answers
@@ -112,7 +113,7 @@ function QuizContainer() {
     </div>
   );
 }
-
+}
 function Question({ question_text }) {
   return <h2 className="question-text">{question_text}</h2>;
 }

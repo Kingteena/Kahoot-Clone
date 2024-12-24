@@ -1,35 +1,43 @@
 import express from "express";
-import { createServer } from "node:http";
-import { fileURLToPath } from "node:url";
-import { dirname, join } from "node:path";
-import { Server } from "socket.io";
+import cors from "cors";
 
 const app = express();
-const server = createServer(app);
-const io = new Server(server);
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+app.use(cors());
+app.use(express.json()); // Built-in body parsing in modern Express
 
-// Serve static files from the 'client' directory
-app.use(express.static(join(__dirname, 'client')));
+// const questions = [
+//
+// ];
 
+// app.get("/api/quiz/:id", (req, res) => {
+//   const quiz = questions.find((q) => q.id === parseInt(req.params.id));
+//   if (quiz) res.json(quiz);
+//   else res.status(404).send("Quiz not found");
+// });
 
-app.get("/", (req, res) => {
-    res.sendFile(join(__dirname, "./client/index.html"));
-    }
-);
+const quizzes = [
+  {
+    text: "What is the capital of France?",
+    options: ["Paris", "London", "Berlin", "Rome"],
+    correctAnswer: 0,
+  },
+  {
+    text: "What is 2 + 2?",
+    options: ["3", "4", "5", "6"],
+    correctAnswer: 1,
+  },
+];
 
-io.on("connection", (socket) => {
-    console.log("a user connected");
-    socket.on("disconnect", () => {
-        console.log("user disconnected");
-    });
-
-    socket.on("answer", (answer) => {
-        console.log(`answer: ${answer}`);
-    });
+app.get("/api/quiz/", (req, res) => {
+  res.json(quizzes);
 });
 
-server.listen(3000, () => {
-    console.log("server running at http://localhost:3000");
-  });
+// Routes
+app.get("/", (req, res) => res.send("Server is running!"));
+
+// Start the server
+const PORT = 3000;
+app.listen(PORT, () =>
+  console.log(`Server running on https://localhost:${PORT}`)
+);
