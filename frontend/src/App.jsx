@@ -49,11 +49,10 @@ function QuizContainer() {
   const [questions, setQuestions] = React.useState(null);
 
   React.useEffect(() => {
-    fetch('http://localhost:3000/api/quiz/')
+    fetch("http://localhost:3000/api/quiz/")
       .then((res) => res.json())
       .then((data) => setQuestions(data));
   }, []);
-
 
   const handleAnswerSelect = (answer) => {
     setIsFeedbackTime(true);
@@ -84,35 +83,32 @@ function QuizContainer() {
     setIsFeedbackTime(false);
   }
 
-
   if (!questions) {
     return <div>Loading...</div>;
-  }
-  else{
+  } else {
     const current_question = questions[currentQuestionIndex];
 
-  return (
-    
-    <div className="quiz-container">
-      <Question question_text={current_question.text} />
-      <Answers
-        options={current_question.options}
-        onAnswerSelect={handleAnswerSelect}
-        correct_answer={
-          isFeedbackTime ? current_question.correctAnswer : undefined
-        }
-      />
-      <button
-        className={
-          isFeedbackTime ? "next-button button" : "next-button button hidden"
-        }
-        onClick={handleNextQuestion}
-      >
-        Next Question
-      </button>
-    </div>
-  );
-}
+    return (
+      <div className="quiz-container">
+        <Question question_text={current_question.text} />
+        <Answers
+          options={current_question.options}
+          onAnswerSelect={handleAnswerSelect}
+          correct_answer={
+            isFeedbackTime ? current_question.correctAnswer : undefined
+          }
+        />
+        <button
+          className={
+            isFeedbackTime ? "next-button button" : "next-button button hidden"
+          }
+          onClick={handleNextQuestion}
+        >
+          Next Question
+        </button>
+      </div>
+    );
+  }
 }
 function Question({ question_text }) {
   return <h2 className="question-text">{question_text}</h2>;
