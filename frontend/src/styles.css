@@ -5,6 +5,10 @@ body {
     Arial, sans-serif;
 }
 
+.error-message {
+  color: red;
+}
+
 .quiz-container {
   border-radius: 5px;
   background-color: rgba(100, 100, 100, 0.5);

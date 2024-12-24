@@ -47,11 +47,23 @@ function QuizContainer() {
   const [isQuizComplete, setIsQuizComplete] = React.useState(false);
   const [isFeedbackTime, setIsFeedbackTime] = React.useState(false);
   const [questions, setQuestions] = React.useState(null);
+  const [error, setError] = React.useState(null);
 
   React.useEffect(() => {
     fetch("http://localhost:3000/api/quiz/")
-      .then((res) => res.json())
-      .then((data) => setQuestions(data));
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Failed to fetch questions");
+        } else {
+          return res.json();
+        }
+      })
+      .then((data) => setQuestions(data))
+      .catch((error) => {
+        console.error(error);
+        setError("Failed to fetch questions. Please Try again later.");
+        setQuestions([]);
+      });
   }, []);
 
   const handleAnswerSelect = (answer) => {
@@ -83,7 +95,10 @@ function QuizContainer() {
     setIsFeedbackTime(false);
   }
 
-  if (!questions) {
+  if (error) {
+    return <div className="error-message">Error: {error}</div>;
+  }
+  else if (!questions) {
     return <div>Loading...</div>;
   } else {
     const current_question = questions[currentQuestionIndex];
