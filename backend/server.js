@@ -40,10 +40,12 @@ const quizzes = [
 io.on("connection", (socket) => {
   console.log("A user connected");
 
+  let score = 0;
+
   
   socket.on("request-question", (questionIndex) => {
     if (questionIndex >= quizzes.length) {
-      socket.emit("quiz-complete");
+      socket.emit("quiz-complete", score);
       return;
     }
     const newQuestion = quizzes[questionIndex];
@@ -51,9 +53,11 @@ io.on("connection", (socket) => {
   });
 
   socket.on("submit-answer", (data) => {
+    console.log("Answer submitted:", data);
    const question = quizzes[data.question_number];
     if (data.answer === question.correctAnswer) {
       socket.emit("correct-answer", question.correctAnswer, true);
+      score++;
     } else {
       socket.emit("correct-answer", question.correctAnswer, false);
     }

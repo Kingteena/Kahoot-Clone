@@ -45,6 +45,7 @@ function QuizContainer() {
   const [isQuizComplete, setIsQuizComplete] = useState(false);
   const [correctAnswerIndex, setCorrectAnswerIndex] = useState(null);
   const [error, setError] = useState(null);
+  const [score, setScore] = useState(0);
 
   useEffect(() => {
     socket.emit("request-question", currentQuestionIndex);
@@ -58,8 +59,9 @@ function QuizContainer() {
       setCorrectAnswerIndex(correctAnswer);
     });
 
-    socket.on("quiz-complete", () => {
+    socket.on("quiz-complete", (score) => {
       setIsQuizComplete(true);
+      setScore(score);
     });
 
     return () => {
@@ -92,7 +94,7 @@ function QuizContainer() {
     return (
       <div className="quiz-container">
         <h2>Quiz Complete!</h2>
-        <p>{/* Your score: {score} / {questions.length} */}</p>
+        <p>Your score: {score}</p>
       </div>
     );
   }
