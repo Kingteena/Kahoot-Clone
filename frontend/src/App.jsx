@@ -1,4 +1,8 @@
-import React from "react";
+import { use } from "react";
+import { useEffect, useState } from "react";
+import { io } from "socket.io-client";
+
+const socket = io("http://localhost:3000");
 
 function AnswerButton({ btn_color, btn_value, onClick }) {
   return (
@@ -12,14 +16,8 @@ function AnswerButton({ btn_color, btn_value, onClick }) {
   );
 }
 
-function Answers({ options, onAnswerSelect, correct_answer }) {
+function Answers({ options, onAnswerSelect, correctAnswerIndex }) {
   const colors = ["#d32f2f", "#388e3c", "#1976d2", "#fbc02d"];
-
-  let isFeedbackTime = false;
-
-  if (correct_answer != undefined) {
-    isFeedbackTime = true;
-  }
 
   return (
     <div className="answer-container">
@@ -27,8 +25,8 @@ function Answers({ options, onAnswerSelect, correct_answer }) {
         <AnswerButton
           key={index}
           btn_color={
-            isFeedbackTime
-              ? index === correct_answer
+            correctAnswerIndex !== null
+              ? index === correctAnswerIndex
                 ? "#00ff7f"
                 : "#b22222"
               : colors[index]
@@ -42,80 +40,81 @@ function Answers({ options, onAnswerSelect, correct_answer }) {
 }
 
 function QuizContainer() {
-  const [currentQuestionIndex, setCurrentQuestionIndex] = React.useState(0);
-  const [score, setScore] = React.useState(0);
-  const [isQuizComplete, setIsQuizComplete] = React.useState(false);
-  const [isFeedbackTime, setIsFeedbackTime] = React.useState(false);
-  const [questions, setQuestions] = React.useState(null);
-  const [error, setError] = React.useState(null);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [currentQuestion, setCurrentQuestion] = useState(null);
+  const [isQuizComplete, setIsQuizComplete] = useState(false);
+  const [correctAnswerIndex, setCorrectAnswerIndex] = useState(null);
+  const [error, setError] = useState(null);
 
-  React.useEffect(() => {
-    fetch("http://localhost:3000/api/quiz/")
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error("Failed to fetch questions");
-        } else {
-          return res.json();
-        }
-      })
-      .then((data) => setQuestions(data))
-      .catch((error) => {
-        console.error(error);
-        setError("Failed to fetch questions. Please Try again later.");
-        setQuestions([]);
-      });
+  useEffect(() => {
+    socket.emit("request-question", currentQuestionIndex);
+
+    socket.on("new-question", (question) => {
+      setCurrentQuestion(question);
+      setCorrectAnswerIndex(null);
+    });
+
+    socket.on("correct-answer", (correctAnswer, correct) => {
+      setCorrectAnswerIndex(correctAnswer);
+    });
+
+    socket.on("quiz-complete", () => {
+      setIsQuizComplete(true);
+    });
+
+    return () => {
+      socket.off("new-question");
+      socket.off("correct-answer");
+      socket.off("quiz-complete");
+    };
   }, []);
 
-  const handleAnswerSelect = (answer) => {
-    setIsFeedbackTime(true);
-    const isCorrect = answer === questions[currentQuestionIndex].correctAnswer;
+  // This effect will run whenever the currentQuestionIndex changes
+  useEffect(() => { 
+    socket.emit("request-question", currentQuestionIndex);
+  }, [currentQuestionIndex]);
 
-    if (isCorrect) {
-      setScore((prevScore) => prevScore + 1);
+  const handleAnswerSelect = (answer) => {
+    if (correctAnswerIndex === null) {
+      socket.emit("submit-answer", {
+        answer: answer,
+        question_number: currentQuestionIndex,
+      });
     }
   };
+
+  function handleNextQuestion() {
+    setCurrentQuestionIndex((prev) => prev + 1)
+    setCorrectAnswerIndex(null);
+  }
 
   if (isQuizComplete) {
     return (
       <div className="quiz-container">
         <h2>Quiz Complete!</h2>
-        <p>
-          Your score: {score} / {questions.length}
-        </p>
+        <p>{/* Your score: {score} / {questions.length} */}</p>
       </div>
     );
   }
 
-  function handleNextQuestion() {
-    if (currentQuestionIndex + 1 < questions.length) {
-      setCurrentQuestionIndex((prev) => prev + 1);
-    } else {
-      setIsQuizComplete(true); // End the quiz if no more questions
-    }
-    setIsFeedbackTime(false);
-  }
-
   if (error) {
     return <div className="error-message">Error: {error}</div>;
-  }
-  else if (!questions) {
+  } else if (!currentQuestion) {
     return <div>Loading...</div>;
   } else {
-    const current_question = questions[currentQuestionIndex];
-
     return (
       <div className="quiz-container">
-        <Question question_text={current_question.text} />
+        <Question question_text={currentQuestion.text} />
         <Answers
-          options={current_question.options}
+          options={currentQuestion.options}
           onAnswerSelect={handleAnswerSelect}
-          correct_answer={
-            isFeedbackTime ? current_question.correctAnswer : undefined
-          }
+          correctAnswerIndex={correctAnswerIndex}
         />
         <button
           className={
-            isFeedbackTime ? "next-button button" : "next-button button hidden"
+            correctAnswerIndex !== null
+              ? "next-button button"
+              : "next-button button hidden"
           }
           onClick={handleNextQuestion}
         >

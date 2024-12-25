@@ -1,14 +1,21 @@
 import express from "express";
+import { Server } from "socket.io";
+import http from "http";
 import cors from "cors";
 
 const app = express();
-
 app.use(cors());
 app.use(express.json()); // Built-in body parsing in modern Express
 
-// const questions = [
-//
-// ];
+const server = http.createServer(app);
+
+const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:5173", // Replace this with the frontend's URL
+    methods: ["GET", "POST"],
+  },
+});
+
 
 // app.get("/api/quiz/:id", (req, res) => {
 //   const quiz = questions.find((q) => q.id === parseInt(req.params.id));
@@ -29,15 +36,45 @@ const quizzes = [
   },
 ];
 
-app.get("/api/quiz/", (req, res) => {
-  res.json(quizzes);
+
+io.on("connection", (socket) => {
+  console.log("A user connected");
+
+  
+  socket.on("request-question", (questionIndex) => {
+    if (questionIndex >= quizzes.length) {
+      socket.emit("quiz-complete");
+      return;
+    }
+    const newQuestion = quizzes[questionIndex];
+    socket.emit("new-question", newQuestion);
+  });
+
+  socket.on("submit-answer", (data) => {
+   const question = quizzes[data.question_number];
+    if (data.answer === question.correctAnswer) {
+      socket.emit("correct-answer", question.correctAnswer, true);
+    } else {
+      socket.emit("correct-answer", question.correctAnswer, false);
+    }
+    
+  }); 
+
+  socket.on("disconnect", () => {
+    console.log("A user disconnected");
+  });
 });
+
+
+// app.get("/api/quiz/", (req, res) => {
+//   res.json(quizzes);
+// });
 
 // Routes
 app.get("/", (req, res) => res.send("Server is running!"));
 
 // Start the server
 const PORT = 3000;
-app.listen(PORT, () =>
+server.listen(PORT, () =>
   console.log(`Server running on https://localhost:${PORT}`)
 );
