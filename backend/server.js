@@ -32,10 +32,8 @@ const quizzes = [
 let rooms = {}; // Store room data
 let ROOM_ID;
 
-
 io.on("connection", (socket) => {
   console.log("A user connected");
-
 
   socket.on("join-room", (roomId) => {
     if (!rooms[ROOM_ID]) {
@@ -43,13 +41,11 @@ io.on("connection", (socket) => {
       rooms[ROOM_ID] = { players: [], host: null, questionIndex: -1 };
     }
 
-
     // Assign host if it's the first connection in the room
     if (!rooms[ROOM_ID].host) {
       rooms[ROOM_ID].host = socket.id;
       io.to(socket.id).emit("role", true);
     } else {
-
       rooms[ROOM_ID].players.push({
         socketID: socket.id,
         answered: false,
@@ -57,7 +53,6 @@ io.on("connection", (socket) => {
       });
 
       io.to(socket.id).emit("role", false);
-
     }
 
     socket.join(ROOM_ID);
@@ -67,20 +62,20 @@ io.on("connection", (socket) => {
     if (rooms[ROOM_ID]?.host !== socket.id) return; // Only the host can control the quiz
 
     // Reset player states
-    Object.values(rooms[ROOM_ID].players).forEach((p) => p.answered = false);
+    Object.values(rooms[ROOM_ID].players).forEach((p) => (p.answered = false));
 
     const questionIndex = ++rooms[ROOM_ID].questionIndex;
 
     if (questionIndex >= quizzes.length) {
-      const players = rooms[ROOM_ID].players
+      const players = rooms[ROOM_ID].players;
 
       // Give all the players their score
 
-      for (let i = 0; i < players.length; i++){
+      for (let i = 0; i < players.length; i++) {
         const playerId = players[i].socketID;
         const score = players[i].score;
 
-        io.to(playerId).emit("quiz-complete", score)
+        io.to(playerId).emit("quiz-complete", score);
       }
 
       //give the host all the players scores
@@ -91,7 +86,6 @@ io.on("connection", (socket) => {
   });
 
   socket.on("submit-answer", (answer) => {
-
     const player = rooms[ROOM_ID]["players"].find(
       (player) => player.socketID === socket.id
     );
@@ -100,7 +94,7 @@ io.on("connection", (socket) => {
       return;
     }
 
-    if (player.answered){
+    if (player.answered) {
       console.warn("Player already tried to answer!");
       return;
     }

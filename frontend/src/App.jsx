@@ -72,7 +72,7 @@ function QuizContainer() {
 
     socket.on("quiz-complete", (scores) => {
       setIsQuizComplete(true);
-        setScore(scores);
+      setScore(scores);
     });
 
     socket.on("role", (role) => {
@@ -104,7 +104,6 @@ function QuizContainer() {
     setCurrentQuestionIndex((prev) => prev + 1);
     setCorrectAnswerIndex(null);
   }
-
 
   if (error) {
     return <div className="error-message">Error: {error}</div>;
