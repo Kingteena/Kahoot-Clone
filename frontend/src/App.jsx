@@ -2,7 +2,7 @@ import { use } from "react";
 import { useEffect, useState } from "react";
 import { io } from "socket.io-client";
 
-const socket = io("http://localhost:3000");
+let socket;
 
 function AnswerButton({ btn_color, btn_value, onClick }) {
   return (
@@ -16,7 +16,7 @@ function AnswerButton({ btn_color, btn_value, onClick }) {
   );
 }
 
-function Answers({ options, onAnswerSelect, correctAnswerIndex }) {
+function Answers({ options, onAnswerSelect, correctAnswerIndex, isHost }) {
   const colors = ["#d32f2f", "#388e3c", "#1976d2", "#fbc02d"];
 
   return (
@@ -32,7 +32,7 @@ function Answers({ options, onAnswerSelect, correctAnswerIndex }) {
               : colors[index]
           }
           btn_value={text}
-          onClick={() => onAnswerSelect(index)}
+          onClick={isHost ? undefined : () => onAnswerSelect(index)}
         />
       ))}
     </div>
@@ -46,82 +46,123 @@ function QuizContainer() {
   const [correctAnswerIndex, setCorrectAnswerIndex] = useState(null);
   const [error, setError] = useState(null);
   const [score, setScore] = useState(0);
+  const [isHost, setIsHost] = useState(false);
+
+  if (!socket) {
+    socket = io("http://localhost:3000");
+  }
 
   useEffect(() => {
-    socket.emit("request-question", currentQuestionIndex);
+    //when socket connects to host console.log it
+
+    socket.on("connect", () => {
+      console.log("Connected");
+      socket.emit("join-room", "room1");
+      console.log("JOining");
+    });
 
     socket.on("new-question", (question) => {
       setCurrentQuestion(question);
       setCorrectAnswerIndex(null);
     });
 
-    socket.on("correct-answer", (correctAnswer, correct) => {
+    socket.on("correct-answer", (correctAnswer, players) => {
       setCorrectAnswerIndex(correctAnswer);
     });
 
-    socket.on("quiz-complete", (score) => {
+    socket.on("quiz-complete", (scores) => {
       setIsQuizComplete(true);
-      setScore(score);
+        setScore(scores);
+    });
+
+    socket.on("role", (role) => {
+      console.log(role);
+      setIsHost(role);
     });
 
     return () => {
+      socket.off("connect");
       socket.off("new-question");
       socket.off("correct-answer");
       socket.off("quiz-complete");
+      socket.off("role");
     };
   }, []);
 
   // This effect will run whenever the currentQuestionIndex changes
-  useEffect(() => { 
+  useEffect(() => {
     socket.emit("request-question", currentQuestionIndex);
   }, [currentQuestionIndex]);
 
   const handleAnswerSelect = (answer) => {
     if (correctAnswerIndex === null) {
-      socket.emit("submit-answer", {
-        answer: answer,
-        question_number: currentQuestionIndex,
-      });
+      socket.emit("submit-answer", answer);
     }
   };
 
   function handleNextQuestion() {
-    setCurrentQuestionIndex((prev) => prev + 1)
+    setCurrentQuestionIndex((prev) => prev + 1);
     setCorrectAnswerIndex(null);
   }
 
-  if (isQuizComplete) {
-    return (
-      <div className="quiz-container">
-        <h2>Quiz Complete!</h2>
-        <p>Your score: {score}</p>
-      </div>
-    );
-  }
 
   if (error) {
     return <div className="error-message">Error: {error}</div>;
+  } else if (isQuizComplete) {
+    return (
+      <div className="quiz-container">
+        <h2>Quiz Complete!</h2>
+        {isHost ? (
+          score.map((player) => (
+            <p>
+              {player.socketID} : {player.score}
+            </p>
+          ))
+        ) : (
+          <p>Your score: {score}</p>
+        )}
+      </div>
+    );
   } else if (!currentQuestion) {
-    return <div>Loading...</div>;
+    return (
+      <div>
+        Loading...
+        {isHost && (
+          <button
+            onClick={() => {
+              socket.emit("request-question");
+            }}
+          >
+            Start Quiz{" "}
+          </button>
+        )}
+      </div>
+    );
   } else {
     return (
       <div className="quiz-container">
+        {isHost && <h2>You Are the Host!</h2>}
+
         <Question question_text={currentQuestion.text} />
         <Answers
           options={currentQuestion.options}
           onAnswerSelect={handleAnswerSelect}
           correctAnswerIndex={correctAnswerIndex}
+          isHost={isHost}
         />
-        <button
-          className={
-            correctAnswerIndex !== null
-              ? "next-button button"
-              : "next-button button hidden"
-          }
-          onClick={handleNextQuestion}
-        >
-          Next Question
-        </button>
+
+        {isHost && (
+          <button
+            className={
+              correctAnswerIndex !== null
+                ? "next-button button"
+                : "next-button button hidden"
+            }
+            onClick={handleNextQuestion}
+          >
+            Next Question
+          </button>
+        )}
       </div>
     );
   }

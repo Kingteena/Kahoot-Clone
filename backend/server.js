@@ -16,13 +16,6 @@ const io = new Server(server, {
   },
 });
 
-
-// app.get("/api/quiz/:id", (req, res) => {
-//   const quiz = questions.find((q) => q.id === parseInt(req.params.id));
-//   if (quiz) res.json(quiz);
-//   else res.status(404).send("Quiz not found");
-// });
-
 const quizzes = [
   {
     text: "What is the capital of France?",
@@ -36,43 +29,105 @@ const quizzes = [
   },
 ];
 
+let rooms = {}; // Store room data
+let ROOM_ID;
+
 
 io.on("connection", (socket) => {
   console.log("A user connected");
 
-  let score = 0;
 
-  
-  socket.on("request-question", (questionIndex) => {
-    if (questionIndex >= quizzes.length) {
-      socket.emit("quiz-complete", score);
-      return;
+  socket.on("join-room", (roomId) => {
+    if (!rooms[ROOM_ID]) {
+      ROOM_ID = roomId;
+      rooms[ROOM_ID] = { players: [], host: null, questionIndex: -1 };
     }
-    const newQuestion = quizzes[questionIndex];
-    socket.emit("new-question", newQuestion);
+
+
+    // Assign host if it's the first connection in the room
+    if (!rooms[ROOM_ID].host) {
+      rooms[ROOM_ID].host = socket.id;
+      io.to(socket.id).emit("role", true);
+    } else {
+
+      rooms[ROOM_ID].players.push({
+        socketID: socket.id,
+        answered: false,
+        score: 0,
+      });
+
+      io.to(socket.id).emit("role", false);
+
+    }
+
+    socket.join(ROOM_ID);
   });
 
-  socket.on("submit-answer", (data) => {
-    console.log("Answer submitted:", data);
-   const question = quizzes[data.question_number];
-    if (data.answer === question.correctAnswer) {
-      socket.emit("correct-answer", question.correctAnswer, true);
-      score++;
+  socket.on("request-question", () => {
+    if (rooms[ROOM_ID]?.host !== socket.id) return; // Only the host can control the quiz
+
+    // Reset player states
+    Object.values(rooms[ROOM_ID].players).forEach((p) => p.answered = false);
+
+    const questionIndex = ++rooms[ROOM_ID].questionIndex;
+
+    if (questionIndex >= quizzes.length) {
+      const players = rooms[ROOM_ID].players
+
+      // Give all the players their score
+
+      for (let i = 0; i < players.length; i++){
+        const playerId = players[i].socketID;
+        const score = players[i].score;
+
+        io.to(playerId).emit("quiz-complete", score)
+      }
+
+      //give the host all the players scores
+      socket.emit("quiz-complete", rooms[ROOM_ID].players);
     } else {
-      socket.emit("correct-answer", question.correctAnswer, false);
+      io.to(ROOM_ID).emit("new-question", quizzes[questionIndex]);
     }
-    
-  }); 
+  });
+
+  socket.on("submit-answer", (answer) => {
+
+    const player = rooms[ROOM_ID]["players"].find(
+      (player) => player.socketID === socket.id
+    );
+    if (!player) {
+      console.error("Player not found");
+      return;
+    }
+
+    if (player.answered){
+      console.warn("Player already tried to answer!");
+      return;
+    }
+    const question = quizzes[rooms[ROOM_ID].questionIndex];
+    const isCorrect = question.correctAnswer === answer;
+
+    player.answered = true;
+    if (isCorrect) player.score++;
+
+    const allAnswered = Object.values(rooms[ROOM_ID]["players"]).every(
+      (p) => p.answered
+    );
+
+    if (allAnswered) {
+      // Send the correct answer to all players
+      io.to(ROOM_ID).emit(
+        "correct-answer",
+        question.correctAnswer,
+        rooms[ROOM_ID].players
+      );
+    }
+  });
 
   socket.on("disconnect", () => {
     console.log("A user disconnected");
   });
 });
-
-
-// app.get("/api/quiz/", (req, res) => {
-//   res.json(quizzes);
-// });
 
 // Routes
 app.get("/", (req, res) => res.send("Server is running!"));
