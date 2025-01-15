@@ -59,6 +59,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("request-question", () => {
+    console.log("Requesting question");
     if (rooms[ROOM_ID]?.host !== socket.id) return; // Only the host can control the quiz
 
     // Reset player states
@@ -67,19 +68,7 @@ io.on("connection", (socket) => {
     const questionIndex = ++rooms[ROOM_ID].questionIndex;
 
     if (questionIndex >= quizzes.length) {
-      const players = rooms[ROOM_ID].players;
-
-      // Give all the players their score
-
-      for (let i = 0; i < players.length; i++) {
-        const playerId = players[i].socketID;
-        const score = players[i].score;
-
-        io.to(playerId).emit("quiz-complete", score);
-      }
-
-      //give the host all the players scores
-      socket.emit("quiz-complete", rooms[ROOM_ID].players);
+      socket.emit("quiz-complete");
     } else {
       io.to(ROOM_ID).emit("new-question", quizzes[questionIndex]);
     }
@@ -116,6 +105,30 @@ io.on("connection", (socket) => {
         rooms[ROOM_ID].players
       );
     }
+  });
+
+  socket.on("request-scores", () => {
+    if (rooms[ROOM_ID]?.host !== socket.id) return; // Only the host can control the quiz
+
+    const players = rooms[ROOM_ID].players;
+
+    let isQuizComplete = false;
+
+    if (rooms[ROOM_ID].questionIndex + 1 >= quizzes.length) {
+      isQuizComplete = true;
+    }
+
+    // Give all the players their score
+
+    for (let i = 0; i < players.length; i++) {
+      const playerId = players[i].socketID;
+      const score = players[i].score;
+
+      io.to(playerId).emit("score", score, isQuizComplete);
+    }
+
+    //give the host all the players scores
+    socket.emit("score", rooms[ROOM_ID].players, isQuizComplete);
   });
 
   socket.on("disconnect", () => {

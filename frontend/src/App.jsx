@@ -1,24 +1,22 @@
-import { use } from "react";
 import { useEffect, useState } from "react";
 import { io } from "socket.io-client";
 
-import {AnswerContainer} from "./components/AnswerContainer";
+import { AnswerContainer } from "./components/AnswerContainer";
 import { Question } from "./components/Question";
+import { PostQuestionScreen } from "./components/PostQuestionScreen";
+import { Leaderboard } from "./components/Leaderboard";
 
-let socket;
+const socket = io("http://localhost:3000");
 
-
-function QuizContainer() {
+export default function App() {
   const [currentQuestion, setCurrentQuestion] = useState(null);
   const [isQuizComplete, setIsQuizComplete] = useState(false);
   const [correctAnswerIndex, setCorrectAnswerIndex] = useState(null);
   const [error, setError] = useState(null);
   const [score, setScore] = useState(0);
   const [isHost, setIsHost] = useState(false);
-
-  if (!socket) {
-    socket = io("http://localhost:3000");
-  }
+  const [answerSubmitted, setAnswerSubmitted] = useState(false);
+  const [isLeaderboardVisible, setIsLeaderboardVisible] = useState(false);
 
   useEffect(() => {
     socket.on("connect", () => {
@@ -31,15 +29,23 @@ function QuizContainer() {
       setCorrectAnswerIndex(null);
       setCurrentQuestion(question);
       setCorrectAnswerIndex(null);
+      setAnswerSubmitted(false);
+      setIsLeaderboardVisible(false);
     });
 
     socket.on("correct-answer", (correctAnswer, players) => {
       setCorrectAnswerIndex(correctAnswer);
     });
 
-    socket.on("quiz-complete", (scores) => {
+    socket.on("quiz-complete", () => {
       setIsQuizComplete(true);
+      socket.emit("request-scores");
+    });
+
+    socket.on("score", (scores, isQuizComplete) => {
       setScore(scores);
+      setIsQuizComplete(isQuizComplete);
+      setIsLeaderboardVisible(true);
     });
 
     socket.on("role", (role) => {
@@ -57,28 +63,40 @@ function QuizContainer() {
   }, []);
 
   const handleAnswerSelect = (answer) => {
-    if (correctAnswerIndex === null) {
+    if (!answerSubmitted) {
+      setAnswerSubmitted(true);
       socket.emit("submit-answer", answer);
     }
   };
 
   if (error) {
     return <div className="error-message">Error: {error}</div>;
-  } else if (isQuizComplete) {
+  } else if (isLeaderboardVisible) {
     return (
       <div className="quiz-container">
-        <h2>Quiz Complete!</h2>
+        {isQuizComplete && <h2>Quiz Complete!</h2>}
         {isHost ? (
-          score.map((player) => (
-            <p>
-              {player.socketID} : {player.score}
-            </p>
-          ))
+          <>
+            <Leaderboard scores={score} />
+            {!isQuizComplete && (
+              <button
+                className="next-button button"
+                onClick={() => {
+                  socket.emit("request-question");
+                  console.log("Requesting question");
+                }}
+              >
+                Next Question
+              </button>
+            )}
+          </>
         ) : (
           <p>Your score: {score}</p>
         )}
       </div>
     );
+  } else if (answerSubmitted && correctAnswerIndex == null) {
+    return <PostQuestionScreen />;
   } else if (!currentQuestion) {
     return (
       <div>
@@ -115,16 +133,13 @@ function QuizContainer() {
                 : "next-button button hidden"
             }
             onClick={() => {
-              socket.emit("request-question");
+              socket.emit("request-scores");
             }}
           >
-            Next Question
+            Next
           </button>
         )}
       </div>
     );
   }
 }
-
-
-export default QuizContainer;

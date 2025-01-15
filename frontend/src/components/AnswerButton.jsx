@@ -9,4 +9,3 @@ export function AnswerButton({ btn_color, btn_value, onClick }) {
     </button>
   );
 }
-
