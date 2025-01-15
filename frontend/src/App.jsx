@@ -2,45 +2,13 @@ import { use } from "react";
 import { useEffect, useState } from "react";
 import { io } from "socket.io-client";
 
+import {AnswerContainer} from "./components/AnswerContainer";
+import { Question } from "./components/Question";
+
 let socket;
 
-function AnswerButton({ btn_color, btn_value, onClick }) {
-  return (
-    <button
-      className="answer-button button"
-      style={{ backgroundColor: btn_color }}
-      onClick={onClick}
-    >
-      {btn_value}
-    </button>
-  );
-}
-
-function Answers({ options, onAnswerSelect, correctAnswerIndex, isHost }) {
-  const colors = ["#d32f2f", "#388e3c", "#1976d2", "#fbc02d"];
-
-  return (
-    <div className="answer-container">
-      {options.map((text, index) => (
-        <AnswerButton
-          key={index}
-          btn_color={
-            correctAnswerIndex !== null
-              ? index === correctAnswerIndex
-                ? "#00ff7f"
-                : "#b22222"
-              : colors[index]
-          }
-          btn_value={text}
-          onClick={isHost ? undefined : () => onAnswerSelect(index)}
-        />
-      ))}
-    </div>
-  );
-}
 
 function QuizContainer() {
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [currentQuestion, setCurrentQuestion] = useState(null);
   const [isQuizComplete, setIsQuizComplete] = useState(false);
   const [correctAnswerIndex, setCorrectAnswerIndex] = useState(null);
@@ -53,15 +21,14 @@ function QuizContainer() {
   }
 
   useEffect(() => {
-    //when socket connects to host console.log it
-
     socket.on("connect", () => {
       console.log("Connected");
       socket.emit("join-room", "room1");
-      console.log("JOining");
+      console.log("Joining");
     });
 
     socket.on("new-question", (question) => {
+      setCorrectAnswerIndex(null);
       setCurrentQuestion(question);
       setCorrectAnswerIndex(null);
     });
@@ -89,21 +56,11 @@ function QuizContainer() {
     };
   }, []);
 
-  // This effect will run whenever the currentQuestionIndex changes
-  useEffect(() => {
-    socket.emit("request-question", currentQuestionIndex);
-  }, [currentQuestionIndex]);
-
   const handleAnswerSelect = (answer) => {
     if (correctAnswerIndex === null) {
       socket.emit("submit-answer", answer);
     }
   };
-
-  function handleNextQuestion() {
-    setCurrentQuestionIndex((prev) => prev + 1);
-    setCorrectAnswerIndex(null);
-  }
 
   if (error) {
     return <div className="error-message">Error: {error}</div>;
@@ -132,7 +89,7 @@ function QuizContainer() {
               socket.emit("request-question");
             }}
           >
-            Start Quiz{" "}
+            Start Quiz
           </button>
         )}
       </div>
@@ -143,7 +100,7 @@ function QuizContainer() {
         {isHost && <h2>You Are the Host!</h2>}
 
         <Question question_text={currentQuestion.text} />
-        <Answers
+        <AnswerContainer
           options={currentQuestion.options}
           onAnswerSelect={handleAnswerSelect}
           correctAnswerIndex={correctAnswerIndex}
@@ -157,7 +114,9 @@ function QuizContainer() {
                 ? "next-button button"
                 : "next-button button hidden"
             }
-            onClick={handleNextQuestion}
+            onClick={() => {
+              socket.emit("request-question");
+            }}
           >
             Next Question
           </button>
@@ -166,8 +125,6 @@ function QuizContainer() {
     );
   }
 }
-function Question({ question_text }) {
-  return <h2 className="question-text">{question_text}</h2>;
-}
+
 
 export default QuizContainer;
