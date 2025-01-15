@@ -1,14 +1,16 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { io } from "socket.io-client";
 
-import { AnswerContainer } from "./components/AnswerContainer";
-import { Question } from "./components/Question";
-import { PostQuestionScreen } from "./components/PostQuestionScreen";
-import { Leaderboard } from "./components/Leaderboard";
+import { AnswerContainer } from "../components/AnswerContainer";
+import { Question } from "../components/Question";
+import { PostQuestionScreen } from "../components/PostQuestionScreen";
+import { Leaderboard } from "../components/Leaderboard";
+
+import { AuthContext } from "../helpers/AuthContext";
 
 const socket = io("http://localhost:3000");
 
-export default function App() {
+export default function Quiz() {
   const [currentQuestion, setCurrentQuestion] = useState(null);
   const [isQuizComplete, setIsQuizComplete] = useState(false);
   const [correctAnswerIndex, setCorrectAnswerIndex] = useState(null);
@@ -17,11 +19,13 @@ export default function App() {
   const [isHost, setIsHost] = useState(false);
   const [answerSubmitted, setAnswerSubmitted] = useState(false);
   const [isLeaderboardVisible, setIsLeaderboardVisible] = useState(false);
+  const {user} = useContext(AuthContext);
 
   useEffect(() => {
     socket.on("connect", () => {
       console.log("Connected");
-      socket.emit("join-room", "room1");
+      console.log(user, user.uid, user.displayName);
+      socket.emit("join-room", "room1", user.uid, user.displayName);
       console.log("Joining");
     });
 

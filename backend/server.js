@@ -35,7 +35,7 @@ let ROOM_ID;
 io.on("connection", (socket) => {
   console.log("A user connected");
 
-  socket.on("join-room", (roomId) => {
+  socket.on("join-room", (roomId, userID, username) => {
     if (!rooms[ROOM_ID]) {
       ROOM_ID = roomId;
       rooms[ROOM_ID] = { players: [], host: null, questionIndex: -1 };
@@ -48,6 +48,8 @@ io.on("connection", (socket) => {
     } else {
       rooms[ROOM_ID].players.push({
         socketID: socket.id,
+        userID : userID,
+        username: username,
         answered: false,
         score: 0,
       });
