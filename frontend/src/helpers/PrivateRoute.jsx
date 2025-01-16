@@ -7,4 +7,4 @@ const PrivateRoute = ({ element }) => {
   return user ? element : <Navigate to="/login" />;
 };
 
-export {PrivateRoute};
+export { PrivateRoute };

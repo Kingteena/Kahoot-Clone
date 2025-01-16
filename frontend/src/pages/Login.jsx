@@ -50,7 +50,7 @@ export default function Login() {
         const errorMessage = error.message;
         console.error(errorCode, errorMessage);
       });
-  }
+  };
 
   if (successfulAction) {
     return (

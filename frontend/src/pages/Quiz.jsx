@@ -19,7 +19,7 @@ export default function Quiz() {
   const [isHost, setIsHost] = useState(false);
   const [answerSubmitted, setAnswerSubmitted] = useState(false);
   const [isLeaderboardVisible, setIsLeaderboardVisible] = useState(false);
-  const {user} = useContext(AuthContext);
+  const { user } = useContext(AuthContext);
 
   useEffect(() => {
     socket.on("connect", () => {

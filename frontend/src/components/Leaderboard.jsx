@@ -1,5 +1,5 @@
 export function Leaderboard({ scores }) {
-    console.log(scores);
+  console.log(scores);
   return (
     <div className="">
       <h1>Leaderboards</h1>
