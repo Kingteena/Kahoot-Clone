@@ -51,18 +51,21 @@ body {
   box-shadow: 0.5rem 0.5rem 0.5rem rgba(0, 0, 0, 0.1);
 }
 
-.center{
+.center {
   text-align: center;
   display: flex;
   justify-content: center;
 }
 
-table, th, td {
+table,
+th,
+td {
   border: 1px solid black;
   border-collapse: collapse;
 }
 
-th, td{
+th,
+td {
   padding: 0.2rem;
 }
 
