@@ -19,14 +19,17 @@ export default function Quiz() {
   const [isHost, setIsHost] = useState(false);
   const [answerSubmitted, setAnswerSubmitted] = useState(false);
   const [isLeaderboardVisible, setIsLeaderboardVisible] = useState(false);
-  const { user } = useContext(AuthContext);
+  const { user, loadingUserData } = useContext(AuthContext);
 
   useEffect(() => {
     socket.on("connect", () => {
       console.log("Connected");
-      console.log(user, user.uid, user.displayName);
-      socket.emit("join-room", "room1", user.uid, user.displayName);
-      console.log("Joining");
+      while (loadingUserData) {
+        setTimeout(() => {
+          console.log(user, user.uid, user.displayName);
+          socket.emit("join-room", "room1", user.uid, user.displayName);
+        }, 100);
+      }
     });
 
     socket.on("new-question", (question) => {
