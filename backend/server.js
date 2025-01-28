@@ -16,7 +16,7 @@ const io = new Server(server, {
   },
 });
 
-const quizzes = [
+const quiz = [
   {
     text: "What is the capital of France?",
     options: ["Paris", "London", "Berlin", "Rome"],
@@ -48,7 +48,7 @@ io.on("connection", (socket) => {
     } else {
       rooms[ROOM_ID].players.push({
         socketID: socket.id,
-        userID : userID,
+        userID: userID,
         username: username,
         answered: false,
         score: 0,
@@ -69,10 +69,10 @@ io.on("connection", (socket) => {
 
     const questionIndex = ++rooms[ROOM_ID].questionIndex;
 
-    if (questionIndex >= quizzes.length) {
+    if (questionIndex >= quiz.length) {
       socket.emit("quiz-complete");
     } else {
-      io.to(ROOM_ID).emit("new-question", quizzes[questionIndex]);
+      io.to(ROOM_ID).emit("new-question", quiz[questionIndex]);
     }
   });
 
@@ -89,7 +89,7 @@ io.on("connection", (socket) => {
       console.warn("Player already tried to answer!");
       return;
     }
-    const question = quizzes[rooms[ROOM_ID].questionIndex];
+    const question = quiz[rooms[ROOM_ID].questionIndex];
     const isCorrect = question.correctAnswer === answer;
 
     player.answered = true;
@@ -116,7 +116,7 @@ io.on("connection", (socket) => {
 
     let isQuizComplete = false;
 
-    if (rooms[ROOM_ID].questionIndex + 1 >= quizzes.length) {
+    if (rooms[ROOM_ID].questionIndex + 1 >= quiz.length) {
       isQuizComplete = true;
     }
 

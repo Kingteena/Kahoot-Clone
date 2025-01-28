@@ -8,6 +8,7 @@ import Quiz from "./pages/Quiz";
 import NoPage from "./pages/NoPage";
 import Login from "./pages/Login";
 import Home from "./pages/Home";
+import AddData from "./pages/AddData";
 
 import "./styles.css";
 
@@ -19,6 +20,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="login" element={<Login />} />
           <Route path="quiz" element={<PrivateRoute element={<Quiz />} />} />
+          <Route path="add" element={<PrivateRoute element={<AddData />} />} />
           <Route path="*" element={<NoPage />} />
         </Routes>
       </BrowserRouter>
