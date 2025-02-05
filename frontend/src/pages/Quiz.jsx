@@ -40,7 +40,7 @@ export default function Quiz() {
       setIsLeaderboardVisible(false);
     });
 
-    socket.on("correct-answer", (correctAnswer, players) => {
+    socket.on("correct-answer", (correctAnswer) => {
       setCorrectAnswerIndex(correctAnswer);
     });
 
@@ -67,7 +67,7 @@ export default function Quiz() {
       socket.off("quiz-complete");
       socket.off("role");
     };
-  }, []);
+  }, [user, loadingUserData]);
 
   const handleAnswerSelect = (answer) => {
     if (!answerSubmitted) {
@@ -129,7 +129,8 @@ export default function Quiz() {
           options={currentQuestion.options}
           onAnswerSelect={handleAnswerSelect}
           correctAnswerIndex={correctAnswerIndex}
-          isHost={isHost}
+          isPlayable={isHost}
+          editable={false}
         />
 
         {isHost && (

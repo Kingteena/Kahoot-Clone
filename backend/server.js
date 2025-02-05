@@ -1,10 +1,17 @@
 import express from "express";
 import { Server } from "socket.io";
 import http from "http";
+import path from "path";
+import { fileURLToPath } from "url";
 import cors from "cors";
+
+// // Derive __dirname
+// const __filename = fileURLToPath(import.meta.url);
+// const __dirname = path.dirname(__filename);
 
 const app = express();
 app.use(cors());
+app.use(express.static("dist"));
 app.use(express.json()); // Built-in body parsing in modern Express
 
 const server = http.createServer(app);
@@ -101,11 +108,7 @@ io.on("connection", (socket) => {
 
     if (allAnswered) {
       // Send the correct answer to all players
-      io.to(ROOM_ID).emit(
-        "correct-answer",
-        question.correctAnswer,
-        rooms[ROOM_ID].players
-      );
+      io.to(ROOM_ID).emit("correct-answer", question.correctAnswer);
     }
   });
 
@@ -138,11 +141,14 @@ io.on("connection", (socket) => {
   });
 });
 
-// Routes
-app.get("/", (req, res) => res.send("Server is running!"));
+// Catch-all route to serve the React app
+app.get("*", (req, res) => {
+  // res.sendFile(__dirname + "/dist/index.html");
+  res.send("Server is running!");
+});
 
 // Start the server
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 server.listen(PORT, () =>
   console.log(`Server running on https://localhost:${PORT}`)
 );

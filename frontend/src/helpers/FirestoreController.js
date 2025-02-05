@@ -4,7 +4,7 @@ import { collection, addDoc, getDocs } from "firebase/firestore";
 export function writeToFirestore(collectionName, objectToSave) {
   addDoc(collection(db, collectionName), objectToSave)
     .then((docRef) => {
-      console.log("Document written with ID: ", docRef.id);
+      console.log("Document written with ID: ", docRef.id, objectToSave);
       return docRef;
     })
     .catch((e) => console.error("Error adding document: ", e));

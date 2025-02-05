@@ -4,7 +4,9 @@ export function AnswerContainer({
   options,
   onAnswerSelect,
   correctAnswerIndex,
-  isHost,
+  isPlayable,
+  editable,
+  onChangeAnswer,
 }) {
   const colors = ["#d32f2f", "#388e3c", "#1976d2", "#fbc02d"];
 
@@ -14,14 +16,17 @@ export function AnswerContainer({
         <AnswerButton
           key={index}
           btn_color={
-            correctAnswerIndex !== null
+            correctAnswerIndex !== null && correctAnswerIndex !== undefined
               ? index === correctAnswerIndex
                 ? "#00ff7f"
                 : "#b22222"
               : colors[index]
           }
           btn_value={text}
-          onClick={isHost ? undefined : () => onAnswerSelect(index)}
+          onClick={isPlayable ? () => onAnswerSelect(index) : undefined}
+          onChange={(e) => onChangeAnswer(e, index)}
+          placeholder={`Answer ${index}`}
+          editable={editable}
         />
       ))}
     </div>

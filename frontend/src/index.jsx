@@ -1,4 +1,4 @@
-import React, { StrictMode } from "react";
+import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./helpers/AuthContext";
@@ -8,7 +8,7 @@ import Quiz from "./pages/Quiz";
 import NoPage from "./pages/NoPage";
 import Login from "./pages/Login";
 import Home from "./pages/Home";
-import AddData from "./pages/AddData";
+import CreateQuiz from "./pages/CreateQuiz";
 
 import "./styles.css";
 
@@ -20,7 +20,10 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="login" element={<Login />} />
           <Route path="quiz" element={<PrivateRoute element={<Quiz />} />} />
-          <Route path="add" element={<PrivateRoute element={<AddData />} />} />
+          <Route
+            path="create"
+            element={<PrivateRoute element={<CreateQuiz />} />}
+          />
           <Route path="*" element={<NoPage />} />
         </Routes>
       </BrowserRouter>
