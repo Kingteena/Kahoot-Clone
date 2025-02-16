@@ -1,8 +1,8 @@
 import express from "express";
 import { Server } from "socket.io";
 import http from "http";
-import path from "path";
-import { fileURLToPath } from "url";
+// import path from "path";
+// import { fileURLToPath } from "url";
 import cors from "cors";
 
 // // Derive __dirname
@@ -23,18 +23,7 @@ const io = new Server(server, {
   },
 });
 
-const quiz = [
-  {
-    text: "What is the capital of France?",
-    options: ["Paris", "London", "Berlin", "Rome"],
-    correctAnswer: 0,
-  },
-  {
-    text: "What is 2 + 2?",
-    options: ["3", "4", "5", "6"],
-    correctAnswer: 1,
-  },
-];
+let quiz = [];
 
 let rooms = {}; // Store room data
 let ROOM_ID;
@@ -43,6 +32,7 @@ io.on("connection", (socket) => {
   console.log("A user connected");
 
   socket.on("join-room", (roomId, userID, username) => {
+    console.log("Joining room", roomId);
     if (!rooms[ROOM_ID]) {
       ROOM_ID = roomId;
       rooms[ROOM_ID] = { players: [], host: null, questionIndex: -1 };
@@ -50,6 +40,7 @@ io.on("connection", (socket) => {
 
     // Assign host if it's the first connection in the room
     if (!rooms[ROOM_ID].host) {
+      console.log("Assigning host");
       rooms[ROOM_ID].host = socket.id;
       io.to(socket.id).emit("role", true);
     } else {
@@ -65,6 +56,11 @@ io.on("connection", (socket) => {
     }
 
     socket.join(ROOM_ID);
+  });
+
+  socket.on("set-quiz", (data) => {
+    console.log("Setting quiz ", data);
+    quiz = data;
   });
 
   socket.on("request-question", () => {

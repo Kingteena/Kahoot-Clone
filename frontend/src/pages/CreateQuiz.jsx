@@ -1,7 +1,8 @@
 import { writeToFirestore } from "../helpers/FirestoreController";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 
 import { AnswerContainer } from "../components/AnswerContainer";
+import { AuthContext } from "../helpers/AuthContext";
 
 export default function CreateQuiz() {
   const [quiz, setQuiz] = useState([]);
@@ -9,6 +10,8 @@ export default function CreateQuiz() {
   const [isQuestion, setIsQuestion] = useState(true);
   const [questionText, setQuestionText] = useState("");
   const [answers, setAnswers] = useState(["", "", "", ""]);
+
+  const { user, loading } = useContext(AuthContext);
 
   function changeQuestion(isIncrement) {
     // Save data
@@ -61,7 +64,13 @@ export default function CreateQuiz() {
       return previousQuiz;
     });
 
-    writeToFirestore("quizzes", { quiz: quiz });
+    //get user id, make sure user is logged in
+
+    if (loading || !user) {
+      console.error("User not logged in");
+      return;
+    }
+    writeToFirestore("quizzes", user.uid, { quiz: quiz });
   }
 
   return (

@@ -7,6 +7,7 @@ import { PostQuestionScreen } from "../components/PostQuestionScreen";
 import { Leaderboard } from "../components/Leaderboard";
 
 import { AuthContext } from "../helpers/AuthContext";
+import { getFirestoreDocumentData } from "../helpers/FirestoreController";
 
 const socket = io("http://localhost:3000");
 
@@ -25,11 +26,12 @@ export default function Quiz() {
     socket.on("connect", () => {
       console.log("Connected");
       while (loadingUserData) {
-        setTimeout(() => {
-          console.log(user, user.uid, user.displayName);
-          socket.emit("join-room", "room1", user.uid, user.displayName);
-        }, 100);
+        console.log("Waiting for user data");
+        setTimeout(() => {}, 100);
       }
+      console.log(user, user.uid, user.displayName);
+      socket.emit("join-room", "room1", user.uid, user.displayName);
+      console.log("Joining room");
     });
 
     socket.on("new-question", (question) => {
@@ -58,6 +60,19 @@ export default function Quiz() {
     socket.on("role", (role) => {
       console.log(role);
       setIsHost(role);
+      s;
+      // If the user is the host, get the quiz from Firestore
+      if (role) {
+        getFirestoreDocumentData("quizzes", user.uid)
+          .then((data) => {
+            console.log(data);
+            socket.emit("set-quiz", data.quiz);
+          })
+          .catch((e) => {
+            console.error("Error fetching quiz: ", e);
+            setError("Error fetching quiz: " + e);
+          });
+      }
     });
 
     return () => {
@@ -129,7 +144,7 @@ export default function Quiz() {
           options={currentQuestion.options}
           onAnswerSelect={handleAnswerSelect}
           correctAnswerIndex={correctAnswerIndex}
-          isPlayable={isHost}
+          isPlayable={!isHost}
           editable={false}
         />
 
