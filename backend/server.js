@@ -79,7 +79,7 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("submit-answer", (answer) => {
+  socket.on("submit-answer", (answer, timeTaken) => {
     const player = rooms[ROOM_ID]["players"].find(
       (player) => player.socketID === socket.id
     );
@@ -87,16 +87,17 @@ io.on("connection", (socket) => {
       console.error("Player not found");
       return;
     }
-
     if (player.answered) {
       console.warn("Player already tried to answer!");
       return;
     }
     const question = quiz[rooms[ROOM_ID].questionIndex];
     const isCorrect = question.correctAnswer === answer;
+    const questionTime = 30000; // question.time;
+    const score = isCorrect ? (1 - timeTaken / questionTime) * 1000 : 0;
 
     player.answered = true;
-    if (isCorrect) player.score++;
+    if (isCorrect) player.score += score;
 
     const allAnswered = Object.values(rooms[ROOM_ID]["players"]).every(
       (p) => p.answered

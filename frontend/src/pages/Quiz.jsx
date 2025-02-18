@@ -20,6 +20,8 @@ export default function Quiz() {
   const [isHost, setIsHost] = useState(false);
   const [answerSubmitted, setAnswerSubmitted] = useState(false);
   const [isLeaderboardVisible, setIsLeaderboardVisible] = useState(false);
+  const [startTime, setStartTime] = useState(null);
+
   const { user, loadingUserData } = useContext(AuthContext);
 
   useEffect(() => {
@@ -60,7 +62,6 @@ export default function Quiz() {
     socket.on("role", (role) => {
       console.log(role);
       setIsHost(role);
-      s;
       // If the user is the host, get the quiz from Firestore
       if (role) {
         getFirestoreDocumentData("quizzes", user.uid)
@@ -84,12 +85,29 @@ export default function Quiz() {
     };
   }, [user, loadingUserData]);
 
+  // Update startTime when the quiz starts
+  useEffect(() => {
+    if (currentQuestion) {
+      setStartTime(Date.now());
+    }
+  }, [currentQuestion]);
+
   const handleAnswerSelect = (answer) => {
-    if (!answerSubmitted) {
+    if (!startTime) return; // Don't allow answering before the quiz has started
+
+    if (!answerSubmitted && correctAnswerIndex == null) {
       setAnswerSubmitted(true);
-      socket.emit("submit-answer", answer);
+
+      const timeTaken = Date.now() - startTime; // time in ms
+      setStartTime(null);
+
+      socket.emit("submit-answer", answer, timeTaken);
     }
   };
+
+  useEffect(() => {
+    console.log(correctAnswerIndex);
+  }, [correctAnswerIndex]);
 
   if (error) {
     return <div className="error-message">Error: {error}</div>;
