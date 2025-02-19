@@ -5,9 +5,9 @@ export default function Home() {
     <div>
       <h1>Home</h1>
       <h2>Welcome to the homepage</h2>
-      <Link to="/quiz">Start Quiz</Link>
+      <Link to="/quiz" className="underline">Start Quiz</Link>
       <br />
-      <Link to="/login">Login or Sign Up</Link>
+      <Link to="/login" className="underline">Login or Sign Up</Link>
     </div>
   );
 }

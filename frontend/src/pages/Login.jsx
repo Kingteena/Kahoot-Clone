@@ -113,7 +113,7 @@ export default function Login() {
             </label>
             <input type="submit" value="Log In" />
           </form>
-          {error && <div className="error-message">{error}</div>}
+          {error && <div className="text-red-500">{error}</div>}
         </div>
       </div>
     );

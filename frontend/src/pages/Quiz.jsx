@@ -154,7 +154,7 @@ export default function Quiz() {
     );
   } else {
     return (
-      <div className="quiz-container">
+      <div className="bg-stone-400 text-center h-screen">
         {isHost && <h2>You Are the Host!</h2>}
 
         <Question question_text={currentQuestion.text} />

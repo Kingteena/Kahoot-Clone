@@ -94,7 +94,9 @@ io.on("connection", (socket) => {
     const question = quiz[rooms[ROOM_ID].questionIndex];
     const isCorrect = question.correctAnswer === answer;
     const questionTime = 30000; // question.time;
-    const score = isCorrect ? (1 - timeTaken / questionTime) * 1000 : 0;
+    const score = isCorrect
+      ? Math.round((1 - timeTaken / questionTime) * 1000)
+      : 0;
 
     player.answered = true;
     if (isCorrect) player.score += score;

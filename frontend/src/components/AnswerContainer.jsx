@@ -11,7 +11,7 @@ export function AnswerContainer({
   const colors = ["#d32f2f", "#388e3c", "#1976d2", "#fbc02d"];
 
   return (
-    <div className="answer-container">
+    <div className="grid grid-cols-2 gap-4 p-4 rounded-lg">
       {options.map((text, index) => (
         <AnswerButton
           key={index}
